@@ -4,12 +4,13 @@ from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
@@ -18,20 +19,19 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("No BOT_TOKEN set in environment")
 
-# Your Mini App URL (set in BotFather)
-MINI_APP_URL = "https://t.me/StorezMbot/StorezMminiapp"  # or the direct WebApp URL if you prefer
+# Your Mini App URL (use the one you set via BotFather)
+MINI_APP_URL = "https://t.me/StorezMbot/StorezMminiapp"   # or your direct webapp URL
 WEBSITE_URL = "https://storesm.net"
-SUPPORT_CHANNEL = "https://t.me/ForexMarketBrief"  # or a dedicated support channel
+SUPPORT_CHANNEL = "https://t.me/ForexMarketBrief"  # or your support contact
 
-# --- Helper functions ---
-
+# ---------- Keyboards ----------
 def get_main_keyboard():
-    """Return the inline keyboard with Open App and Visit Website buttons."""
+    """Inline keyboard with Open App and Visit Website."""
     keyboard = [
         [
             InlineKeyboardButton(
                 text="🛍 Open STORESM",
-                web_app={"url": MINI_APP_URL}   # Launches mini app
+                web_app={"url": MINI_APP_URL}
             ),
             InlineKeyboardButton(
                 text="🌐 Visit Website",
@@ -42,19 +42,14 @@ def get_main_keyboard():
     return InlineKeyboardMarkup(keyboard)
 
 def get_app_only_keyboard():
-    """Return a keyboard with only the Open App button (for /app)."""
+    """Keyboard with only the Open App button."""
     keyboard = [
-        [
-            InlineKeyboardButton(
-                text="🛍 Open STORESM",
-                web_app={"url": MINI_APP_URL}
-            )
-        ]
+        [InlineKeyboardButton("🛍 Open STORESM", web_app={"url": MINI_APP_URL})]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_categories_keyboard():
-    """Return a keyboard with category buttons that open the app with start_param."""
+    """Category buttons that open the app with a start_param for deep-linking."""
     categories = [
         ("Social Media", "social_media"),
         ("Marketing Tools", "marketing_tools"),
@@ -63,17 +58,15 @@ def get_categories_keyboard():
     ]
     keyboard = []
     for label, param in categories:
-        # Deep link: when user taps, the app opens with startapp=category=...
+        # Deep link: ?startapp=category=param
         deep_link = f"{MINI_APP_URL}?startapp=category={param}"
         keyboard.append([InlineKeyboardButton(label, web_app={"url": deep_link})])
-    # Add a general "Open App" button
+    # Add a general "Open App" button at the bottom
     keyboard.append([InlineKeyboardButton("🛍 Open STORESM", web_app={"url": MINI_APP_URL})])
     return InlineKeyboardMarkup(keyboard)
 
-# --- Command handlers ---
-
+# ---------- Command Handlers ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a welcome message when /start is issued."""
     user = update.effective_user
     welcome_text = (
         f"👋 Welcome to STORESM, {user.first_name}!\n\n"
@@ -91,14 +84,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 async def app_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message with the Open App button."""
     await update.message.reply_text(
         "🛍 Tap the button below to open the STORESM Mini App.",
         reply_markup=get_app_only_keyboard()
     )
 
 async def categories_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Show categories with deep‑linked buttons to open the app filtered."""
     text = (
         "📂 Explore our main categories:\n\n"
         "• Social Media\n"
@@ -113,17 +104,13 @@ async def categories_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
 
 async def website_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message with the website link."""
-    await update.message.reply_text(
-        f"🌐 Visit our official website: {WEBSITE_URL}"
-    )
+    await update.message.reply_text(f"🌐 Visit our official website: {WEBSITE_URL}")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Explain bot commands."""
     help_text = (
         "🤖 *STORESM Bot Commands*\n\n"
-        "/start – Welcome message & Open Mini App\n"
-        "/app – Open STORESM Mini App\n"
+        "/start – Welcome & open the Mini App\n"
+        "/app – Open the Mini App directly\n"
         "/categories – Browse product categories\n"
         "/website – Visit storesm.net\n"
         "/help – Show this help message\n"
@@ -133,7 +120,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(help_text, parse_mode="Markdown")
 
 async def support_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Provide support contact."""
     support_text = (
         "📞 For support, please reach out through:\n\n"
         f"• Telegram Channel: {SUPPORT_CHANNEL}\n"
@@ -141,22 +127,19 @@ async def support_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     )
     await update.message.reply_text(support_text)
 
-# --- Error handler ---
+# ---------- Error Handler ----------
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Log errors and notify user."""
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
     if update and update.effective_message:
         await update.effective_message.reply_text(
             "⚠️ Oops, something went wrong. Please try again later."
         )
 
-# --- Main ---
+# ---------- Main ----------
 def main() -> None:
-    """Start the bot."""
-    # Create the Application
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Register command handlers
+    # Register commands
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("app", app_command))
     application.add_handler(CommandHandler("categories", categories_command))
@@ -164,10 +147,9 @@ def main() -> None:
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("support", support_command))
 
-    # Register error handler
     application.add_error_handler(error_handler)
 
-    # Start polling (or use webhook)
+    # Start polling (or use webhook if preferred)
     logger.info("Bot started polling...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
